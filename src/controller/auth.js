@@ -23,6 +23,7 @@ class Auth {
                 fullName: resault.fullName,
                 image: resault.image,
                 username: resault.username,
+                role: resault.role
             }
             if (resault) {
                 res.status(200).json(formatResponseSuccess(data, true, 'Đăng kí thành công'));
@@ -37,10 +38,10 @@ class Auth {
 
     async login(req, res) {
         try {
-            const checkEmail = await User.findOne({ username: req.body.username, role: 0 })
+            const checkEmail = await User.findOne({ username: req.body.username })
             if (!checkEmail) {
                 return res.status(200).json(
-                    formatResponseError({ code: '404' }, false, 'Email chưa được đăng kí')
+                    formatResponseError({ code: '404' }, false, 'Tài khoản chưa được đăng kí')
                 );
             }
             const checkPass = bcyrpt.compareSync(req.body.password, checkEmail.password)
@@ -54,6 +55,7 @@ class Auth {
                 fullName: checkEmail.fullName,
                 image: checkEmail.image,
                 username: checkEmail.username,
+                role: checkEmail.role
             }
             res.status(200).json(formatResponseSuccess(data, true, 'Đăng nhập thành công'));
         } catch (error) {
