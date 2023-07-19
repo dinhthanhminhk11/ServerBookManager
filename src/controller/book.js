@@ -21,6 +21,7 @@ class Book {
             const resault = await new book(dataBook).save()
 
             if (resault) {
+                console.log(resault)
                 res.status(200).json(formatResponseSuccess(resault, true, 'Thêm thành công'));
             }
 
@@ -53,6 +54,7 @@ class Book {
             data.forEach(async (item) => {
                 const dataCatogory = await category.findById({ _id: item.idCategory })
                 const result = {
+                    _id : item._id,
                     name: item.name,
                     price: item.price,
                     discount: item.discount,
@@ -80,6 +82,7 @@ class Book {
                 idCategory: req.body.idCategory
             })
             if (dataUpdate) {
+                console.log(dataUpdate)
                 res.status(200).json(formatResponseSuccess(dataUpdate, true, 'Cập nhật thành công'));
             }
         } catch (error) {

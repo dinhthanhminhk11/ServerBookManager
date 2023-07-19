@@ -4,8 +4,8 @@ const userSchema = new mongoose.Schema({
     type: String,
   },
   image: {
-    type: String,
-    default: ''
+    data: Buffer,
+    contentType: String,
   },
   username: {
     type: String,
@@ -14,7 +14,7 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     minlength: 6,
-  },role: {
+  }, role: {
     type: Number,
     default: 0,
   }
