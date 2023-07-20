@@ -3,7 +3,9 @@ import { formatResponseError, formatResponseSuccess, formatResponseSuccessNoData
 const bcyrpt = require('bcrypt');
 const multer = require('multer');
 const path = require('path');
-
+const fs = require('fs');
+const util = require('util');
+const unlinkFile = util.promisify(fs.unlink);
 // Configure multer storage
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -46,16 +48,13 @@ class Auth {
                     fullName: req.body.fullName,
                     username: req.body.username,
                     password: passHash,
-                    image: {
-                        data: req.file.buffer,
-                        contentType: req.file.mimetype,
-                    },
+                    image: `${req.file.filename}`,
                 };
                 const result = await new User(dataUser).save();
                 const data = {
                     id: result.id,
                     fullName: result.fullName,
-                    image: `http://localhost:8080/uploads/${req.file.filename}`,
+                    image: `${req.file.filename}`,
                     username: result.username,
                     role: result.role,
                 };
@@ -64,6 +63,45 @@ class Auth {
                     res.status(200).json(formatResponseSuccess(data, true, 'Đăng kí thành công'));
                 }
             });
+        } catch (error) {
+            console.log(error);
+            return res.status(200).json(formatResponseError({ code: '404' }, false, 'server error'));
+        }
+    }
+
+    async updateUser(req, res) {
+        try {
+            upload.single('image')(req, res, async (err) => {
+                const user = await User.findOne({ username: req.body.username, role: 0 });
+
+                if (!user) {
+                    return res.status(404).json(formatResponseError({ code: '404' }, false, 'Người dùng không tồn tại'));
+                }
+                if (req.file) {
+                    if (user.image) {
+                        const oldImagePath = `./uploads/${user.image}`;
+                        try {
+                            await unlinkFile(oldImagePath);
+                        } catch (error) {
+                            console.log('Lỗi khi xóa hình ảnh cũ:', error);
+                        }
+                    }
+                    user.image = req.file.filename;
+                }
+                if (req.body.fullName) {
+                    user.fullName = req.body.fullName;
+                }
+                const updatedUser = await user.save();
+                const data = {
+                    id: updatedUser.id,
+                    fullName: updatedUser.fullName,
+                    image: req.file ? req.file.filename : user.image,  
+                    username: updatedUser.username,
+                    role: updatedUser.role,
+                };
+        
+                res.status(200).json(formatResponseSuccess(data, true, 'Cập nhật thành công'));
+            })
         } catch (error) {
             console.log(error);
             return res.status(200).json(formatResponseError({ code: '404' }, false, 'server error'));
@@ -93,6 +131,46 @@ class Auth {
         } catch (error) {
             console.log(error);
             return res.status(200).json(formatResponseError({ code: '404' }, false, 'server error'));
+        }
+    }
+
+    async changePassword(req, res) {
+        try {
+            const user = await User.findOne({ username: req.body.username, role: 0 });
+    
+            if (!user) {
+                return res.status(404).json(formatResponseError({ code: '404' }, false, 'Người dùng không tồn tại'));
+            }
+            const newPasswordHash = bcyrpt.hashSync(req.body.newPassword, 10);
+            user.password = newPasswordHash;
+            await user.save();
+    
+            return res.status(200).json(formatResponseSuccess(null, true, 'Đổi mật khẩu thành công'));
+        } catch (error) {
+            console.log(error);
+            return res.status(500).json(formatResponseError({ code: '500' }, false, 'Lỗi server'));
+        }
+    }
+
+    async deleteAccount(req, res) {
+        try {
+            const user = await User.findOne({ username: req.body.username, role: 0 });
+            if (!user) {
+                return res.status(404).json(formatResponseError({ code: '404' }, false, 'Người dùng không tồn tại'));
+            }
+            if (user.image) {
+                const imagePath = `./uploads/${user.image}`;
+                try {
+                    await unlinkFile(imagePath);
+                } catch (error) {
+                    console.log('Lỗi khi xóa hình ảnh:', error);
+                }
+            }
+            await User.deleteOne({ _id: user._id });
+            return res.status(200).json(formatResponseSuccess(null, true, 'Xóa tài khoản thành công'));
+        } catch (error) {
+            console.log(error);
+            return res.status(500).json(formatResponseError({ code: '500' }, false, 'Lỗi server'));
         }
     }
 }
