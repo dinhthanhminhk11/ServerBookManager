@@ -72,7 +72,7 @@ class Auth {
     async updateUser(req, res) {
         try {
             upload.single('image')(req, res, async (err) => {
-                const user = await User.findOne({ username: req.body.username, role: 0 });
+                const user = await User.findOne({ username: req.body.username });
 
                 if (!user) {
                     return res.status(404).json(formatResponseError({ code: '404' }, false, 'Người dùng không tồn tại'));
@@ -136,12 +136,12 @@ class Auth {
 
     async changePassword(req, res) {
         try {
-            const user = await User.findOne({ username: req.body.username, role: 0 });
+            const user = await User.findOne({ username: req.body.username });
     
             if (!user) {
                 return res.status(404).json(formatResponseError({ code: '404' }, false, 'Người dùng không tồn tại'));
             }
-            const newPasswordHash = bcyrpt.hashSync(req.body.newPassword, 10);
+            const newPasswordHash = bcyrpt.hashSync(req.body.password, 10);
             user.password = newPasswordHash;
             await user.save();
     
@@ -154,7 +154,7 @@ class Auth {
 
     async deleteAccount(req, res) {
         try {
-            const user = await User.findOne({ username: req.body.username, role: 0 });
+            const user = await User.findOne({ username: req.params.id, role: 0 });
             if (!user) {
                 return res.status(404).json(formatResponseError({ code: '404' }, false, 'Người dùng không tồn tại'));
             }
@@ -171,6 +171,20 @@ class Auth {
         } catch (error) {
             console.log(error);
             return res.status(500).json(formatResponseError({ code: '500' }, false, 'Lỗi server'));
+        }
+    }
+
+    async getAllUser(req, res) {
+        try {
+            const data = await User.find()
+            if (data) {
+                res.status(200).json(formatResponseSuccess(data, true, 'Lấy danh sách thành công'));
+            }
+        } catch (error) {
+            console.log(error)
+            return res.status(200).json(
+                formatResponseError({ code: '404' }, false, 'server error')
+            );
         }
     }
 }
