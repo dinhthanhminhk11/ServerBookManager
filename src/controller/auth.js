@@ -1,5 +1,10 @@
 import User from '../models/user';
+import loanslipModel from '../models/loanslip';
+import category from '../models/category';
+import book from '../models/book';
+
 import { formatResponseError, formatResponseSuccess, formatResponseSuccessNoData } from '../config';
+import loanslip from './loanslip';
 const bcyrpt = require('bcrypt');
 const multer = require('multer');
 const path = require('path');
@@ -179,6 +184,30 @@ class Auth {
             const data = await User.find()
             if (data) {
                 res.status(200).json(formatResponseSuccess(data, true, 'Lấy danh sách thành công'));
+            }
+        } catch (error) {
+            console.log(error)
+            return res.status(200).json(
+                formatResponseError({ code: '404' }, false, 'server error')
+            );
+        }
+    }
+
+    async getAllSizeHome(req, res) {
+        try {
+            const dataUser = await User.find()
+            const dataBook = await book.find()
+            const dataCatogory = await category.find()
+            const dataKLoanSlip = await loanslipModel.find()
+
+            const data ={
+                "user" :  dataUser.length,
+                "book" :  dataBook.length,
+                "category" :  dataCatogory.length,
+                "loanSlip" :  dataKLoanSlip.length,
+            }
+            if (data) {
+                res.status(200).json(formatResponseSuccess(data, true, 'Lấy size thành công'));
             }
         } catch (error) {
             console.log(error)

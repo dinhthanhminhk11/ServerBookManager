@@ -12,6 +12,6 @@ const bookSchema = new mongoose.Schema({
     idCategory: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Category"
-      }
+    }
 })
 module.exports = mongoose.model("Book", bookSchema);

@@ -49,23 +49,39 @@ class Loanslip {
 
     async getAllLoanslip(req, res) {
         try {
-            const data = await loanslip.find()
+            const data = await loanslip.find().populate('idBook', 'name');
             if (data) {
-                res.status(200).json(formatResponseSuccess(data, true, 'Lấy danh sách thành công'));
+                const modifiedData = data.map(item => {
+                    return {
+                        ...item.toObject(),
+                        nameBook: item.idBook.name,
+                        idBook: undefined,
+                    };
+                });
+
+                res.status(200).json(formatResponseSuccess(modifiedData, true, 'Lấy danh sách thành công'));
             }
         } catch (error) {
-            console.log(error)
-            return res.status(200).json(
-                formatResponseError({ code: '404' }, false, 'server error')
-            );
+            console.log(error);
+            return res.status(200).json(formatResponseError({ code: '404' }, false, 'server error'));
         }
     }
 
     async updateLoanSlipStatus(req, res) {
         try {
-            const dataUpdate = await loanslip.updateOne({ _id: req.params.id }, { actualPaymentDate: Date.now(), isPay: true })
+            const dataUpdate = await loanslip.updateOne({ _id: req.params.id }, { actualPaymentDate: Date.now(), isPay: true });
+
             if (dataUpdate) {
-                res.status(200).json(formatResponseSuccess(dataUpdate, true, 'Cập nhật thành công'));
+                const dataResponse = await loanslip.findById(req.params.id).populate('idBook', 'name');
+                const modifiedData = {
+                    ...dataResponse._doc,
+                    nameBook: dataResponse.idBook.name,
+                    idBook: dataResponse.idBook._id
+                };
+
+                delete modifiedData.idBook;
+
+                res.status(200).json(formatResponseSuccess(modifiedData, true, 'Cập nhật thành công'));
             }
         } catch (error) {
             console.log(error)
@@ -75,6 +91,45 @@ class Loanslip {
         }
     }
 
+    async getPopularBooks(req, res) {
+        try {
+            const result = await loanslip.aggregate([
+              {
+                $match: { isPay: true },
+              },
+              {
+                $group: {
+                  _id: "$idBook",
+                  size: { $sum: 1 },
+                },
+              },
+              {
+                $lookup: {
+                  from: "books", // Tên collection của bảng Book (collection)
+                  localField: "_id",
+                  foreignField: "_id",
+                  as: "bookInfo",
+                },
+              },
+              {
+                $project: {
+                  _id: 0,
+                  nameBook: { $arrayElemAt: ["$bookInfo.name", 0] },
+                  size: 1,
+                },
+              },
+            ]);
+        
+            if (result.length > 0) {
+              res.status(200).json(result);
+            } else {
+              res.status(404).json({ message: "No popular books found." });
+            }
+          } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: "Server error." });
+          }
+    }
 }
 
 export default new Loanslip();

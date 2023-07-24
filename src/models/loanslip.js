@@ -10,8 +10,8 @@ const loanslipSchema = new mongoose.Schema({
         require: true
     },
     idBook: {
-        type: String,
-        require: true
+        type: mongoose.Schema.Types.ObjectId,  
+        ref: "Book"  
     },
     price: {
         type: Number,

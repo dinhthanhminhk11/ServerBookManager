@@ -8,4 +8,5 @@ router.patch('/auth/updateUser' , User.updateUser)
 router.patch('/auth/changePassword' , User.changePassword)
 router.delete('/auth/:id' , User.deleteAccount)
 router.get('/auth' , User.getAllUser)
+router.get('/sizeHome' , User.getAllSizeHome)
 export default router;

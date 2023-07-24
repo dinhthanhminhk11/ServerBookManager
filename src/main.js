@@ -31,7 +31,6 @@ mongoose
   .connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    family: 4
     // Version node khác nhau chạy sẽ bị lỗi
   })
   .then(() => {
