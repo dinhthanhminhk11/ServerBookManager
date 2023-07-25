@@ -130,6 +130,58 @@ class Loanslip {
             res.status(500).json({ message: "Server error." });
           }
     }
+
+    async  getREvene(req, res) {
+        try {
+            const startDate = req.params.startDate; // Định dạng timeLong
+            const endDate = req.params.endDate; // Định dạng timeLong
+        
+            console.log(startDate)
+            console.log(endDate)
+            const result = await loanslip.aggregate([
+              {
+                $match: {
+                  isPay: true,
+                  $or: [
+                    { borrowedDate: { $gte: startDate, $lte: endDate } },
+                    { payDay: { $gte: startDate, $lte: endDate } },
+                  ],
+                },
+              },
+              {
+                $group: {
+                  _id: "$idBook",
+                  size: { $sum: 1 },
+                },
+              },
+              {
+                $lookup: {
+                  from: "books", // Tên collection của bảng Book (collection)
+                  localField: "_id",
+                  foreignField: "_id",
+                  as: "bookInfo",
+                },
+              },
+              {
+                $project: {
+                  _id: 0,
+                  nameBook: { $arrayElemAt: ["$bookInfo.name", 0] },
+                  size: 1,
+                },
+              },
+            ]);
+        
+            if (result.length > 0) {
+              res.status(200).json(result);
+            } else {
+              res.status(404).json({ message: "No popular books found." });
+            }
+          } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: "Server error." });
+          }
+      }
+      
 }
 
 export default new Loanslip();

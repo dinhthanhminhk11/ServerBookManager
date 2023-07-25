@@ -5,4 +5,5 @@ router.route('/loanslip').post(loanslip.addLoanslip).get(loanslip.getAllLoanslip
 router.route('/loanslip/updateStatus/:id').patch(loanslip.updateLoanSlipStatus)
 router.route('/loanslip/:id').delete(loanslip.deleteLoanslip)
 router.route('/getTopMost').get(loanslip.getPopularBooks)
+router.route('/getCountReven/startDate=:startDate/endDate=:endDate').get(loanslip.getREvene)
 export default router
